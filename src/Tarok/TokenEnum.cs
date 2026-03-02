@@ -25,5 +25,6 @@ public enum TokenEnum
     String,
     Boolean,
     Number,
+    Trig,
     Array,
 }
