@@ -1,30 +1,10 @@
-﻿class ReplEngine()
-{
-    public void Evaluate(string line)
-    {
-                   
-    }
+﻿using Tarok;
 
-    public void Print(string line)
-    {
-        Console.WriteLine(line);
-    }
-
-    public void Start()
-    {
-        while (true)
-        {
-            Console.Write("> ");
-            var line = Console.ReadLine();
-            if (string.IsNullOrEmpty(line)) break;
-            Evaluate(line);
-        }
-    }
-}
+namespace TarotRepl;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         if (args.Length > 1)
         {
@@ -32,18 +12,28 @@ public class Program
         }
         else if (args.Length == 1)
         {
-            RunFile(args[0]);
+            await RunFile(args[0]);
         }
         else
         {
-            ReplEngine engine = new ReplEngine();
+            var engine = new ReplEngine();
             engine.Start();
         }
     }
     
-    static void RunFile(string filePath)
+    static async Task RunFile(string filePath)
     {
-        
+        var lexer = new Lexer();
+        await lexer.LoadScript(filePath);
+        if (lexer.Errors.Count > 0)
+        {
+            foreach (var error in lexer.Errors)
+            {
+                Console.WriteLine(error.Message);
+            }
+            return;
+        }
+        var tokens = lexer.ScanTokens();
     }
 }
 

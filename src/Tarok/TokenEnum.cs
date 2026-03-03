@@ -4,12 +4,24 @@ public enum TokenEnum
 {
     MajorArcana,
     MinorArcana,
-    Rank,
+    
     // Suit
     SwordCard,
     WandCard,
     CupCard,
     CoinCard,
+    
+    // Ranks
+    I,
+    II,
+    III,
+    IV,
+    V,
+    VI,
+    VII,
+    VIII,
+    IX,
+    X,
     
     EOF,
     StartOfStatement,

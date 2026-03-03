@@ -1,6 +1,6 @@
 namespace Tarok;
 
-public class Lexer(string source)
+public class Lexer
 {
     private static Dictionary<string, TokenEnum> keywords = new()
         {
@@ -49,7 +49,7 @@ public class Lexer(string source)
     private int _start = 0; // first character being scanned
     private int _current = 0; // character currently considered
     private int _line = 1;
-    private int _column = 1;
+    private int _column = 0;
     private readonly List<Token> _tokens = [];
 
     // Roman numeral buffer
@@ -57,8 +57,27 @@ public class Lexer(string source)
     
     public readonly List<TokenError> Errors = [];
     
-    private bool IsAtEnd => _current >= source.Length;
+    public string Source { get; set; }
+
+    private bool IsAtEnd => _current >= Source.Length;
+
+    public async Task LoadScript(string filePath)
+    {
+        try
+        {
+            using StreamReader reader = new(filePath);
+            var text = await reader.ReadToEndAsync();
+            Source = text;
+        }
+        catch (IOException e)
+        {
+            Console.WriteLine(e.Message);
+            Errors.Add(new TokenError(e.Message, _line, _column));
+        }
+    }
     
+    
+
     public List<Token> ScanTokens()
     {
         while (!IsAtEnd)
@@ -102,7 +121,6 @@ public class Lexer(string source)
                 Errors.Add(new TokenError("Unexpected character: " + c, _line, _column));
                 break;
         }
-        _column = _current;
     }
 
     private void StringLiteral()
@@ -125,7 +143,7 @@ public class Lexer(string source)
         Advance();
         
         // Trim the quotes to get our string
-        var value = source.Substring(_start + 1, _current - 1);
+        var value = Source[(_start + 1)..(_current - 1)];
         AddToken(TokenEnum.String, value);
     }
 
@@ -138,7 +156,7 @@ public class Lexer(string source)
     private bool Match(char expected)
     {
         if (IsAtEnd) return false;
-        if (source[_current] != expected) return false;
+        if (Source[_current] != expected) return false;
         
         _current++;
         return true;
@@ -146,7 +164,7 @@ public class Lexer(string source)
 
     private void MinorArcana()
     {
-        _rnBuffer.Add(source[_current]);
+        _rnBuffer.Add(Source[_current - 1]);
         
         // Scan for Rank
         while (!Peek().Equals(' ') && !IsAtEnd)
@@ -159,15 +177,27 @@ public class Lexer(string source)
             Errors.Add(new TokenError("Unexpected end of statement", _line, _column));
         }
         
+        // skip the ' ' b/w the rank and suit
         if (Peek().Equals(' ')) Advance();
-        _start = _current;
+        else
+        {
+            //_column++;
+            Errors.Add(new TokenError("Unexpected end of string", _line, _column));
+            return;
+        }
+        var rank = string.Join("", _rnBuffer);
+        var rankType = Enum.Parse<TokenEnum>(rank);
+        
+        var suitIndex = _current;
         
         // Scan for Suit
         while (IsAlpha(Peek())) Advance();
-        var text = source.Substring(_start, _current - _start);
+        var text = Source[suitIndex.._current];
         var containsKey = keywords.TryGetValue(text, out var type);
         if (!containsKey) type = TokenEnum.Identifier;
-        AddToken(type);
+        //_tokens.Add(new Token(type, text, null, _line, _column));
+        var minor = new MinorArcana(rankType, type);
+        AddToken(TokenEnum.MinorArcana, minor);
     }
 
     private bool IsAlpha(char c)
@@ -183,18 +213,18 @@ public class Lexer(string source)
     private char Advance()
     {
         _column++;
-        return source[_current++];
+        return Source[_current++];
     }
 
     private void AddToken(TokenEnum token, object? literal = null)
     {
-        var text = source.Substring(_start, _current);
+        var text = Source[_start.._current];
         _tokens.Add(new Token(token, text, literal, _line, _column));
     }
 
     private char Peek()
     {
-        return IsAtEnd ? '\0' : source[_current];
+        return IsAtEnd ? '\0' : Source[_current];
     }
 }
 
