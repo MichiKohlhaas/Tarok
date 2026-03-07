@@ -112,7 +112,7 @@ public class Lexer
             default:
                 if (IsDigit(c))
                 {
-                    
+                    NumeralLiteral();
                 }
                 else if (IsAlpha(c))
                 {
@@ -147,9 +147,32 @@ public class Lexer
         AddToken(TokenEnum.String, value);
     }
 
+    private void NumeralLiteral()
+    {
+        while (IsDigit(Peek())) Advance();
+        
+        // fractional/decimal
+        if (Peek().Equals('.') && IsDigit(PeekNext()))
+        {
+            Advance();
+            while (IsDigit(Peek())) Advance();
+        }
+        AddToken(TokenEnum.Number, double.Parse(Source[(_start)..(_current)]));
+    }
+
     private void Identify()
     {
         while(IsAlpha(Peek())) Advance();
+        // Hanged Man
+        if (PeekNext().Equals('M'))
+        {
+            
+        }
+        // Major Arcana
+        
+        // Keyword 
+        
+        // other
         AddToken(TokenEnum.Identifier);
     }
 
@@ -192,9 +215,14 @@ public class Lexer
         
         // Scan for Suit
         while (IsAlpha(Peek())) Advance();
+        
         var text = Source[suitIndex.._current];
         var containsKey = keywords.TryGetValue(text, out var type);
-        if (!containsKey) type = TokenEnum.Identifier;
+        if (!containsKey)
+        {
+            Errors.Add(new TokenError($"Unknown keyword: {text}", _line, _column));
+            return;
+        }
         //_tokens.Add(new Token(type, text, null, _line, _column));
         var minor = new MinorArcana(rankType, type);
         AddToken(TokenEnum.MinorArcana, minor);
@@ -225,6 +253,11 @@ public class Lexer
     private char Peek()
     {
         return IsAtEnd ? '\0' : Source[_current];
+    }
+
+    private char PeekNext()
+    {
+        return _current + 1 >= Source.Length ? '\0' : Source[_current + 1];
     }
 }
 
