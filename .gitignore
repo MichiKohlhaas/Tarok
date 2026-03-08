@@ -1,5 +1,6 @@
 /src/Tarok/obj/*
 /src/Tarok/.idea/*
-/src/TarotRepl/obj/*
-/src/TarotRepl/.idea/*
+/src/TarotUI/obj/*
+/src/TarotUI/bin/*
+/src/TarotUI/.idea/*
 .idea

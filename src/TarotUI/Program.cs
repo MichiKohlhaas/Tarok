@@ -113,6 +113,9 @@ int cursorCol = 0;
 try
 {
     DrawGrid();
+    Console.CursorTop++;
+    Console.CursorLeft = 0;
+    Console.WriteLine("Q to quit");
     DrawCell(0,0, "", true);
     Console.CursorTop++;
     Console.CursorLeft = 0;
