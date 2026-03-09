@@ -70,7 +70,7 @@ void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false
     if (highlighted)
     {
         //Console.SetCursorPosition(newCursLeft, newCursTop + 1);
-        Console.BackgroundColor = edit ? ConsoleColor.Yellow : ConsoleColor.DarkCyan;
+        Console.BackgroundColor = edit ? ConsoleColor.Gray : ConsoleColor.White;
         if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
         else cellBuilder.Append(content);
         Console.Write(cellBuilder.ToString());
@@ -124,12 +124,15 @@ var cursorCol = 0;
 try
 {
     DrawGrid();
-    Console.CursorTop++;
-    Console.CursorLeft = 0;
+    // Print text at bottom
+    Console.SetCursorPosition(0, height * 2 + 1);
     Console.WriteLine("Q to quit");
+    
+    // Draw the cursor cell
     DrawCell(0,0, "", true);
-    Console.CursorTop++;
-    Console.CursorLeft = 0;
+    // Resetting the cursor
+    Console.CursorTop = 1;
+    Console.CursorLeft = 1;
 
     var state = State.Navigate;    
     var quit = false;
