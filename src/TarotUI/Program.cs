@@ -46,7 +46,7 @@ void DrawGrid()
     }
 }
 
-void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false)
+void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false, bool edit = false)
 {
     StringBuilder cellBuilder = new ();
     
@@ -70,7 +70,7 @@ void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false
     if (highlighted)
     {
         //Console.SetCursorPosition(newCursLeft, newCursTop + 1);
-        Console.BackgroundColor = ConsoleColor.DarkCyan;
+        Console.BackgroundColor = edit ? ConsoleColor.Yellow : ConsoleColor.DarkCyan;
         if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
         else cellBuilder.Append(content);
         Console.Write(cellBuilder.ToString());
@@ -103,12 +103,23 @@ void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false
 }
 
 
+// try set window first
+try
+{
+    Console.SetWindowSize(120, 40);
+    Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+}
+catch
+{
+    // ignored
+}
+
 Console.SetCursorPosition(0, 0);
 cursOrigCol = Console.CursorLeft;
 cursOrigRow = Console.CursorTop;
-Console.CursorVisible = false;
-int cursorRow = 0;
-int cursorCol = 0;
+Console.CursorVisible = true;
+var cursorRow = 0;
+var cursorCol = 0;
 
 try
 {
@@ -119,47 +130,57 @@ try
     DrawCell(0,0, "", true);
     Console.CursorTop++;
     Console.CursorLeft = 0;
+
+    var state = State.Navigate;    
+    var quit = false;
+    string editBuffer = string.Empty;
     
-    bool quit = false;
-    
-    Console.SetCursorPosition(1,1);
     while (!quit)
     {
+        
         var key = Console.ReadKey(intercept: true);
+        
+        
         switch (key.Key)
         {
             case ConsoleKey.Q:
+                if (state == State.Edit) break;
                 quit = true;
                 break;
             case ConsoleKey.LeftArrow:
-                // Redraw cell to normal
-                DrawCell(cursorRow, cursorCol, "");
-                // Draw cell to right highlighted
-                cursorCol = Math.Clamp(cursorCol - 1, 0, width - 1);
-                DrawCell(cursorRow, cursorCol, "", true);
+                if (state == State.Edit) break;
+                MoveCursor(ref cursorCol, width, -1);
                 break;
             case ConsoleKey.RightArrow:
-                // Redraw cell to normal
-                DrawCell(cursorRow, cursorCol, "");
-                // Draw cell to right highlighted
-                cursorCol = Math.Clamp(cursorCol + 1, 0, width - 1);
-                DrawCell(cursorRow, cursorCol, "", true);
+                if (state == State.Edit) break;
+                MoveCursor(ref cursorCol, width, 1);
                 break;
             case ConsoleKey.UpArrow:
-                // Redraw cell to normal
-                DrawCell(cursorRow, cursorCol, "");
-                // Draw cell to right highlighted
-                cursorRow = Math.Clamp(cursorRow - 1, 0, height - 1);
-                DrawCell(cursorRow, cursorCol, "", true);
+                if (state == State.Edit) break;
+                MoveCursor(ref cursorRow, height, -1);
                 break;
             case ConsoleKey.DownArrow:
-                // Redraw cell to normal
-                DrawCell(cursorRow, cursorCol, "");
-                // Draw cell to right highlighted
-                cursorRow = Math.Clamp(cursorRow + 1, 0, height - 1);
-                DrawCell(cursorRow, cursorCol, "", true);
+                if (state == State.Edit) break;
+                MoveCursor(ref cursorRow, height, 1);
                 break;
-            default: break;
+            case ConsoleKey.Enter:
+                state ^= State.Edit;
+                if (state == State.Edit) SetupEdit();
+                DrawCell(cursorRow, cursorCol, "", true, state == State.Edit);
+                break;
+            case ConsoleKey.Escape:
+                if (state == State.Navigate) break;
+                editBuffer = string.Empty;
+                break;
+            default:
+                if (state == State.Edit)
+                {
+                    if (editBuffer.Length <= 5)
+                    {
+                        editBuffer += key.KeyChar;
+                    }
+                }
+                break;
         }
     }
 }
@@ -168,4 +189,27 @@ finally
     Console.CursorVisible = true;
     Console.ResetColor();
     Console.Clear();
+}
+
+void MoveCursor(ref int cursorPos, int dimension, int operation)
+{
+    // Redraw cell to normal
+    DrawCell(cursorRow, cursorCol, "");
+    // Draw cell to right highlighted
+    cursorPos = Math.Clamp(cursorPos + operation, 0, dimension - 1);
+    DrawCell(cursorRow, cursorCol, "", true);
+}
+
+void SetupEdit()
+{
+    Console.CursorVisible = true;
+    var terminalPos = GridToTerminal(cursorRow, cursorCol);
+    Console.SetCursorPosition(terminalPos.termRow, terminalPos.termCol);
+}
+
+[Flags]
+internal enum State
+{
+    Navigate,
+    Edit,
 }

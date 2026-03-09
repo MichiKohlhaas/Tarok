@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Tarok;
+namespace TarotUI;
 
 /// <summary>
 /// Front end of the interpreter that reports the error. 
