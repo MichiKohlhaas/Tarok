@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TarotUI", "src\TarotUI\Taro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tarok", "src\Tarok\Tarok.csproj", "{60260D96-1375-41E1-9091-4BF8EA0D10FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tarok.UnitTests", "tests\Tarok.UnitTests\Tarok.UnitTests.csproj", "{E9B8E887-4F23-4C87-A4DA-9C25A9FA4597}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{60260D96-1375-41E1-9091-4BF8EA0D10FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60260D96-1375-41E1-9091-4BF8EA0D10FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60260D96-1375-41E1-9091-4BF8EA0D10FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9B8E887-4F23-4C87-A4DA-9C25A9FA4597}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9B8E887-4F23-4C87-A4DA-9C25A9FA4597}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9B8E887-4F23-4C87-A4DA-9C25A9FA4597}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9B8E887-4F23-4C87-A4DA-9C25A9FA4597}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
