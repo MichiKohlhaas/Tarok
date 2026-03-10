@@ -1,10 +1,11 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 
 namespace TarotUI;
 
 internal static class Program
 {
-    private static string[,] cellContents;
+    private static string[,]? _cellContents;
     private const char Corner = '+';
     private const char Horizontal = '-';
     private const char Vertical = '|';
@@ -29,7 +30,7 @@ internal static class Program
             height = 7;
             width = 10;
         }
-        cellContents = new string[height, width];
+        _cellContents = new string[height, width];
         
         void DrawGrid()
         {
@@ -69,7 +70,7 @@ internal static class Program
             if (highlighted)
             {
                 //Console.SetCursorPosition(newCursLeft, newCursTop + 1);
-                Console.BackgroundColor = edit ? ConsoleColor.Gray : ConsoleColor.White;
+                Console.BackgroundColor = edit ? ConsoleColor.Black : ConsoleColor.White;
                 if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
                 else cellBuilder.Append(content);
                 Console.Write(cellBuilder.ToString());
@@ -138,7 +139,6 @@ internal static class Program
 
             var state = State.Navigate;    
             var quit = false;
-            var editBuffer = string.Empty;
             var editBufferChars = new char[6];
             var counter = 0;
             var localCursorMin = 0;
@@ -147,7 +147,7 @@ internal static class Program
             while (!quit)
             {
 
-                var key = Console.ReadKey(intercept: state == State.Edit);
+                var key = Console.ReadKey(intercept: true);
                 
 
                 switch (key.Key)
@@ -174,13 +174,23 @@ internal static class Program
                         break;
                     case ConsoleKey.Enter:
                         state ^= State.Edit;
+                        counter = 0;
+                        if (state != State.Edit)
+                        {
+                            Array.Clear(editBufferChars, 0, editBufferChars.Length);
+                            var lexeme = _cellContents[cursorRow, cursorCol];
+                            if (lexeme.Length != CellPadding)
+                            {
+                                _cellContents[cursorRow, cursorCol] = lexeme.PadRight(CellPadding);
+                            }
+                        }
                         Console.CursorVisible = state == State.Edit;
-                        DrawCell(cursorRow, cursorCol, "", true, state == State.Edit);
+                        DrawCell(cursorRow, cursorCol, _cellContents[cursorRow, cursorCol], true, state == State.Edit);
                         localCursorMin = Console.CursorLeft;
                         localCursorMax = localCursorMin + CellPadding;
                         break;
                     case ConsoleKey.Escape:
-                        if (state == State.Navigate) break;
+                        //if (state == State.Navigate) break;
                         //editBuffer = string.Empty;
                         break;
                     default:
@@ -189,14 +199,14 @@ internal static class Program
                             
                             if (!char.IsControl(key.KeyChar))
                             {
-                                Console.BackgroundColor = ConsoleColor.Gray;
-                                Console.ForegroundColor = ConsoleColor.White;
+                                Console.BackgroundColor = ConsoleColor.Black;
+                                Console.ForegroundColor = ConsoleColor.Red;
                                 
                                 
                                 editBufferChars[counter] = key.KeyChar;
                                 Console.Write(editBufferChars[counter]);
                                 counter = Math.Clamp(counter + 1, 0, 5);
-                                // if the counter is at 4, don't advance the cursor
+                                // if the counter is at the end of the buffer, don't advance the cursor
                                 if (Console.CursorLeft >= localCursorMax)
                                 {
                                     Console.CursorLeft--;
@@ -205,7 +215,7 @@ internal static class Program
                             }
                             else if (key.Key == ConsoleKey.Backspace)
                             {
-                                Console.BackgroundColor = ConsoleColor.Gray;
+                                Console.BackgroundColor = ConsoleColor.Black;
                                 editBufferChars[counter] = ' ';
                                 Console.Write(' ');
                                 // undo the advance caused by Write
@@ -214,9 +224,12 @@ internal static class Program
                                 if (Console.CursorLeft - 1 < localCursorMin) Console.CursorLeft = localCursorMin;
                                 else Console.CursorLeft--;
                                 
-                                counter = Math.Clamp(counter - 1, 0, 4);
+                                counter = Math.Clamp(counter - 1, 0, 5);
+                                
+                                
                             }
                             Console.ResetColor();
+                            _cellContents[cursorRow, cursorCol] = new string(editBufferChars).TrimStart('\0').TrimEnd('\0');
                         }
                         break;
                 }
@@ -233,10 +246,10 @@ internal static class Program
         void MoveCursor(ref int cursorPos, int dimension, int operation)
         {
             // Redraw cell to normal
-            DrawCell(cursorRow, cursorCol, "");
+            DrawCell(cursorRow, cursorCol, _cellContents![cursorRow, cursorCol]);
             // Draw cell to right highlighted
             cursorPos = Math.Clamp(cursorPos + operation, 0, dimension - 1);
-            DrawCell(cursorRow, cursorCol, "", true);
+            DrawCell(cursorRow, cursorCol, _cellContents[cursorRow, cursorCol], true);
         }
     }
 }
