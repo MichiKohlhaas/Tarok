@@ -1,3 +1,3 @@
 namespace Tarok;
 
-public record MajorArcana();
+public record MajorArcana(string Card);

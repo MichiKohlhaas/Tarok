@@ -129,7 +129,7 @@ internal static class Program
             DrawGrid();
             // Print text at bottom
             Console.SetCursorPosition(0, height * 2 + 1);
-            Console.WriteLine("Q to quit");
+            Console.WriteLine("Q to quit\tEnter to edit, again to commit.\tEsc to cancel edit.");
     
             // Draw the cursor cell
             DrawCell(0,0, "", true);
@@ -143,6 +143,7 @@ internal static class Program
             var counter = 0;
             var localCursorMin = 0;
             var localCursorMax = 0;
+            var tempCellContents = "";
             
             while (!quit)
             {
@@ -174,6 +175,7 @@ internal static class Program
                         break;
                     case ConsoleKey.Enter:
                         state ^= State.Edit;
+                        
                         counter = 0;
                         if (state != State.Edit)
                         {
@@ -183,15 +185,22 @@ internal static class Program
                             {
                                 _cellContents[cursorRow, cursorCol] = lexeme.PadRight(CellPadding);
                             }
-                        }
+                        } // entering edit mode, preserve the current cell's content in case esc is pressed
+                        else tempCellContents = _cellContents[cursorRow, cursorCol];
                         Console.CursorVisible = state == State.Edit;
                         DrawCell(cursorRow, cursorCol, _cellContents[cursorRow, cursorCol], true, state == State.Edit);
                         localCursorMin = Console.CursorLeft;
                         localCursorMax = localCursorMin + CellPadding;
                         break;
                     case ConsoleKey.Escape:
-                        //if (state == State.Navigate) break;
-                        //editBuffer = string.Empty;
+                        // stop editing, empty buffer, return cell's contents
+                        if (state == State.Edit)
+                        {
+                            state = State.Navigate;
+                            Array.Clear(editBufferChars, 0, editBufferChars.Length);
+                            _cellContents[cursorRow, cursorCol] = tempCellContents;
+                            DrawCell(cursorRow, cursorCol, _cellContents[cursorRow, cursorCol], true);
+                        }
                         break;
                     default:
                         if (state == State.Edit)

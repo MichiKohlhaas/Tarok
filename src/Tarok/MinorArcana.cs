@@ -1,3 +1,3 @@
 namespace Tarok;
 
-public record MinorArcana(TokenEnum Rank, TokenEnum Suit);
+public record MinorArcana(int Rank, TokenEnum Suit);

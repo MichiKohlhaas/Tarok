@@ -11,17 +11,6 @@ public enum TokenEnum
     CupCard,
     CoinCard,
     
-    // Ranks
-    I,
-    II,
-    III,
-    IV,
-    V,
-    VI,
-    VII,
-    VIII,
-    IX,
-    X,
     
     EOF,
     StartOfStatement,
