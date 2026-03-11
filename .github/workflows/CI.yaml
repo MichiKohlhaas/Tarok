@@ -1,0 +1,46 @@
+ name: Kohlhaas CI
+
+on:
+   push:
+     branches: [ master ]
+   pull_request:
+     branches: [ master ]
+   workflow_dispatch:
+       
+
+env:
+  DOTNET_VERSION: "10.x"
+  SOLUTION_PATH: "Tarok.sln"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+           fetch-depth: 0
+      
+      - name: setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: install dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+      
+      - name: build
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+      
+      - name: test
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-restore --no-build --verbosity normal --logger trx --results-directory "TestResults-${{ env.DOTNET_VERSION }}"
+      
+      - name: upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-results-${{ env.DOTNET_VERSION }}
+          path: TestResults-${{ env.DOTNET_VERSION }}
+        if: ${{ always() }}
+          
+         
+       
