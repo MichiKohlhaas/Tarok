@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using Tarok;
 
 namespace TarotUI;
 
@@ -10,11 +11,13 @@ internal static class Program
     private const char Horizontal = '-';
     private const char Vertical = '|';
 
+    private const string ErrorMessage = "Invalid card, {0}, at row|col: {1}|{2}";
+
     private const byte CellWidth = 7;
     private const byte CellHeight = 2;
     private const byte CellPadding = 6;
     
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         int cursOrigRow;
         int cursOrigCol;
@@ -31,6 +34,8 @@ internal static class Program
             width = 10;
         }
         _cellContents = new string[height, width];
+        
+        Lexer lexer = new Lexer();
         
         void DrawGrid()
         {
@@ -70,7 +75,7 @@ internal static class Program
             if (highlighted)
             {
                 //Console.SetCursorPosition(newCursLeft, newCursTop + 1);
-                Console.BackgroundColor = edit ? ConsoleColor.Black : ConsoleColor.White;
+                Console.BackgroundColor = edit ? ConsoleColor.Black : ConsoleColor.DarkCyan;
                 if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
                 else cellBuilder.Append(content);
                 Console.Write(cellBuilder.ToString());
@@ -128,7 +133,8 @@ internal static class Program
         {
             DrawGrid();
             // Print text at bottom
-            Console.SetCursorPosition(0, height * 2 + 1);
+            var bottomPrintPos = height * 2 + 1;
+            Console.SetCursorPosition(0, bottomPrintPos);
             Console.WriteLine("Q to quit\tEnter to edit, again to commit.\tEsc to cancel edit.");
     
             // Draw the cursor cell
@@ -158,11 +164,25 @@ internal static class Program
                         quit = true;
                         break;
                     case ConsoleKey.LeftArrow:
-                        if (state == State.Edit) break;
+                        if (state == State.Edit)
+                        {
+                            if (Console.CursorLeft - 1 < localCursorMin) break;
+                            
+                            Console.CursorLeft--;
+                            counter = Math.Clamp(counter - 1, 0, 5);
+                            break;
+                        }
                         MoveCursor(ref cursorCol, width, -1);
                         break;
                     case ConsoleKey.RightArrow:
-                        if (state == State.Edit) break;
+                        if (state == State.Edit)
+                        {
+                            if (Console.CursorLeft + 1 >= localCursorMax) break;
+
+                            Console.CursorLeft++;
+                            counter = Math.Clamp(counter + 1, 0, 5);
+                            break;
+                        }
                         MoveCursor(ref cursorCol, width, 1);
                         break;
                     case ConsoleKey.UpArrow:
@@ -174,19 +194,40 @@ internal static class Program
                         MoveCursor(ref cursorRow, height, 1);
                         break;
                     case ConsoleKey.Enter:
+                        
                         state ^= State.Edit;
                         
                         counter = 0;
+                        var isEmptyCell = string.IsNullOrEmpty(_cellContents[cursorRow, cursorCol]);
                         if (state != State.Edit)
                         {
                             Array.Clear(editBufferChars, 0, editBufferChars.Length);
-                            var lexeme = _cellContents[cursorRow, cursorCol];
-                            if (lexeme.Length != CellPadding)
+                            var text = _cellContents[cursorRow, cursorCol];
+                            if (!isEmptyCell && !lexer.IsValidToken(text))
                             {
-                                _cellContents[cursorRow, cursorCol] = lexeme.PadRight(CellPadding);
+                                var tempCursorTopPos = Console.CursorTop;
+                                var tempCursorLeftPos = Console.CursorLeft;
+                                Console.SetCursorPosition(0, bottomPrintPos + 1);
+                                var msg = string.Format(ErrorMessage, text, cursorRow, cursorCol);
+                                // pad the right to clear text from last write
+                                int padLength = (width * CellWidth) - msg.Length;
+                                Console.WriteLine(msg.PadRight(padLength));
+                                Console.SetCursorPosition(tempCursorLeftPos, tempCursorTopPos);
                             }
-                        } // entering edit mode, preserve the current cell's content in case esc is pressed
-                        else tempCellContents = _cellContents[cursorRow, cursorCol];
+                            if (text.Length != CellPadding && !isEmptyCell)
+                            {
+                                _cellContents[cursorRow, cursorCol] = text.PadRight(CellPadding);
+                            }
+                        } 
+                        else if (!isEmptyCell)
+                        {
+                            // entering edit mode, preserve the current cell's content in case esc is pressed
+                            tempCellContents = _cellContents[cursorRow, cursorCol];
+                            
+                            // load the buffer with the last text if not empty
+                            editBufferChars = _cellContents[cursorRow, cursorCol].ToCharArray();
+                        }
+                        
                         Console.CursorVisible = state == State.Edit;
                         DrawCell(cursorRow, cursorCol, _cellContents[cursorRow, cursorCol], true, state == State.Edit);
                         localCursorMin = Console.CursorLeft;
@@ -209,7 +250,7 @@ internal static class Program
                             if (!char.IsControl(key.KeyChar))
                             {
                                 Console.BackgroundColor = ConsoleColor.Black;
-                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.ForegroundColor = ConsoleColor.White;
                                 
                                 
                                 editBufferChars[counter] = key.KeyChar;

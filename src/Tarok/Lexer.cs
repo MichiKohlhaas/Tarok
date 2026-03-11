@@ -91,6 +91,7 @@ public class Lexer
     public bool IsValidToken(string token)
     {
         var isReversed = false;
+        var startingErrorCount = Errors.Count;
         token = token.TrimStart().TrimEnd();
         
         if (string.IsNullOrEmpty(token)) return false;
@@ -98,13 +99,16 @@ public class Lexer
         if (token.Contains('@')) isReversed = true;
 
         Source = isReversed ? token[1..] :  token;
-
+        _start = _current;
         while (!IsAtEnd)
         {
             ScanToken();
         }
-        
-        return Errors.Count == 0;
+
+        _current = 0;
+        _start = 0;
+        _rnBuffer.Clear();
+        return Errors.Count == startingErrorCount;
     }
 
     private void ScanToken()
