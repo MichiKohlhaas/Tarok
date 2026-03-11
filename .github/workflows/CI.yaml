@@ -1,4 +1,4 @@
- name: Kohlhaas CI
+name: Tarok CI
 
 on:
    push:
