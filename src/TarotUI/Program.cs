@@ -16,100 +16,28 @@ internal static class Program
     private const byte CellWidth = 7;
     private const byte CellHeight = 2;
     private const byte CellPadding = 6;
+    private static int _cursOrigRow;
+    private static int _cursOrigCol;
+    private static int _height;
+    private static int _width;
     
     public static async Task Main(string[] args)
     {
-        int cursOrigRow;
-        int cursOrigCol;
 
-        int height;
-        int width;
         if (args.Length > 2)
         {
-            (width, height) = (int.Parse(args[0]), int.Parse(args[1]));
+            (_width, _height) = (int.Parse(args[0]), int.Parse(args[1]));
         }
         else
         {
-            height = 7;
-            width = 10;
+            _height = 7;
+            _width = 10;
         }
-        _cellContents = new string[height, width];
+        _cellContents = new string[_height, _width];
         
         Lexer lexer = new Lexer();
         
-        void DrawGrid()
-        {
-            Console.Clear();
-            Console.SetCursorPosition(0,0);
-            for (var row = 0; row < height; row++)
-            {
-                for (var col = 0; col < width; col++)
-                {
-                    DrawCell(row, col, "");
-                }
         
-            }
-        }
-
-        void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false, bool edit = false)
-        {
-            StringBuilder cellBuilder = new ();
-    
-            var cursorPosition = GridToTerminal(gridRow, gridCol);
-            var newCursLeft = cursOrigCol + cursorPosition.termCol;
-            var newCursTop = cursOrigRow + cursorPosition.termRow;
-            Console.SetCursorPosition(newCursLeft, newCursTop);
-    
-            // top border
-            cellBuilder.Append(Corner);
-            cellBuilder.Append(Horizontal, CellPadding);
-            cellBuilder.Append(Corner);
-            Console.Write(cellBuilder.ToString());
-            cellBuilder.Clear();
-    
-            // content row
-            cellBuilder.Append(Vertical);
-            Console.SetCursorPosition(newCursLeft, newCursTop + 1);
-            Console.Write(cellBuilder.ToString());
-            cellBuilder.Clear();
-            if (highlighted)
-            {
-                //Console.SetCursorPosition(newCursLeft, newCursTop + 1);
-                Console.BackgroundColor = edit ? ConsoleColor.Black : ConsoleColor.DarkCyan;
-                if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
-                else cellBuilder.Append(content);
-                Console.Write(cellBuilder.ToString());
-                Console.ResetColor();
-                cellBuilder.Clear();
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
-                else cellBuilder.Append(content);
-            }
-            cellBuilder.Append(Vertical);
-            Console.Write(cellBuilder.ToString());
-            cellBuilder.Clear();
-    
-            // bottom row
-            cellBuilder.Append(Corner);
-            cellBuilder.Append(Horizontal, CellPadding);
-            cellBuilder.Append(Corner);
-            Console.SetCursorPosition(newCursLeft, newCursTop + 2);
-            Console.Write(cellBuilder.ToString());
-    
-            // reset cursor to be at the content part
-            Console.SetCursorPosition(newCursLeft + 1, newCursTop + 1);
-        }
-
-        (int termRow, int termCol) GridToTerminal(int gridRow, int gridCol)
-        {
-            var termRow = Math.Clamp(gridRow * CellHeight, 0, int.MaxValue);
-            var termCol = Math.Clamp(gridCol * CellWidth, 0, int.MaxValue);
-
-            return (termRow, termCol);
-        }
-
 
         // try set window first
         try
@@ -123,8 +51,8 @@ internal static class Program
         }
 
         Console.SetCursorPosition(0, 0);
-        cursOrigCol = Console.CursorLeft;
-        cursOrigRow = Console.CursorTop;
+        _cursOrigCol = Console.CursorLeft;
+        _cursOrigRow = Console.CursorTop;
         Console.CursorVisible = false;
         var cursorRow = 0;
         var cursorCol = 0;
@@ -133,7 +61,7 @@ internal static class Program
         {
             DrawGrid();
             // Print text at bottom
-            var bottomPrintPos = height * 2 + 1;
+            var bottomPrintPos = _height * 2 + 1;
             Console.SetCursorPosition(0, bottomPrintPos);
             Console.WriteLine("Q to quit\tEnter to edit, again to commit.\tEsc to cancel edit.");
     
@@ -172,7 +100,7 @@ internal static class Program
                             counter = Math.Clamp(counter - 1, 0, 5);
                             break;
                         }
-                        MoveCursor(ref cursorCol, width, -1);
+                        MoveCursor(ref cursorCol, _width, -1);
                         break;
                     case ConsoleKey.RightArrow:
                         if (state == State.Edit)
@@ -183,15 +111,15 @@ internal static class Program
                             counter = Math.Clamp(counter + 1, 0, 5);
                             break;
                         }
-                        MoveCursor(ref cursorCol, width, 1);
+                        MoveCursor(ref cursorCol, _width, 1);
                         break;
                     case ConsoleKey.UpArrow:
                         if (state == State.Edit) break;
-                        MoveCursor(ref cursorRow, height, -1);
+                        MoveCursor(ref cursorRow, _height, -1);
                         break;
                     case ConsoleKey.DownArrow:
                         if (state == State.Edit) break;
-                        MoveCursor(ref cursorRow, height, 1);
+                        MoveCursor(ref cursorRow, _height, 1);
                         break;
                     case ConsoleKey.Enter:
                         
@@ -210,11 +138,11 @@ internal static class Program
                                 Console.SetCursorPosition(0, bottomPrintPos + 1);
                                 var msg = string.Format(ErrorMessage, text, cursorRow, cursorCol);
                                 // pad the right to clear text from last write
-                                int padLength = (width * CellWidth) - msg.Length;
+                                int padLength = (_width * CellWidth) - msg.Length;
                                 Console.WriteLine(msg.PadRight(padLength));
                                 Console.SetCursorPosition(tempCursorLeftPos, tempCursorTopPos);
                             }
-                            if (text.Length != CellPadding && !isEmptyCell)
+                            if (!isEmptyCell && text.Length != CellPadding)
                             {
                                 _cellContents[cursorRow, cursorCol] = text.PadRight(CellPadding);
                             }
@@ -292,6 +220,7 @@ internal static class Program
             Console.Clear();
         }
 
+        return;
 
         void MoveCursor(ref int cursorPos, int dimension, int operation)
         {
@@ -301,6 +230,78 @@ internal static class Program
             cursorPos = Math.Clamp(cursorPos + operation, 0, dimension - 1);
             DrawCell(cursorRow, cursorCol, _cellContents[cursorRow, cursorCol], true);
         }
+    }
+    
+    private static void DrawGrid()
+    {
+        Console.Clear();
+        Console.SetCursorPosition(0,0);
+        for (var row = 0; row < _height; row++)
+        {
+            for (var col = 0; col < _width; col++)
+            {
+                DrawCell(row, col, "");
+            }
+        
+        }
+    }
+    private static void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false, bool edit = false)
+    {
+        StringBuilder cellBuilder = new ();
+
+        var cursorPosition = GridToTerminal(gridRow, gridCol);
+        var newCursLeft = _cursOrigCol + cursorPosition.termCol;
+        var newCursTop = _cursOrigRow + cursorPosition.termRow;
+        Console.SetCursorPosition(newCursLeft, newCursTop);
+
+        // top border
+        cellBuilder.Append(Corner);
+        cellBuilder.Append(Horizontal, CellPadding);
+        cellBuilder.Append(Corner);
+        Console.Write(cellBuilder.ToString());
+        cellBuilder.Clear();
+
+        // content row
+        cellBuilder.Append(Vertical);
+        Console.SetCursorPosition(newCursLeft, newCursTop + 1);
+        Console.Write(cellBuilder.ToString());
+        cellBuilder.Clear();
+        if (highlighted)
+        {
+            //Console.SetCursorPosition(newCursLeft, newCursTop + 1);
+            Console.BackgroundColor = edit ? ConsoleColor.Black : ConsoleColor.DarkCyan;
+            if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
+            else cellBuilder.Append(content);
+            Console.Write(cellBuilder.ToString());
+            Console.ResetColor();
+            cellBuilder.Clear();
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
+            else cellBuilder.Append(content);
+        }
+        cellBuilder.Append(Vertical);
+        Console.Write(cellBuilder.ToString());
+        cellBuilder.Clear();
+
+        // bottom row
+        cellBuilder.Append(Corner);
+        cellBuilder.Append(Horizontal, CellPadding);
+        cellBuilder.Append(Corner);
+        Console.SetCursorPosition(newCursLeft, newCursTop + 2);
+        Console.Write(cellBuilder.ToString());
+
+        // reset cursor to be at the content part
+        Console.SetCursorPosition(newCursLeft + 1, newCursTop + 1);
+    }
+    
+    private static (int termRow, int termCol) GridToTerminal(int gridRow, int gridCol)
+    {
+        var termRow = Math.Clamp(gridRow * CellHeight, 0, int.MaxValue);
+        var termCol = Math.Clamp(gridCol * CellWidth, 0, int.MaxValue);
+
+        return (termRow, termCol);
     }
 }
 
