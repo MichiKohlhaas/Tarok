@@ -72,4 +72,23 @@ public class Tests
         var result = _lexer.IsValidToken(wrongSuit);
         Assert.That(result, Is.False);
     }
+    
+    [Test]
+    public void ScanGrid_ListOfTokens_ShouldBeTrue()
+    {
+        
+        var grid = Helpers.TestDataBuilder.CreateSpread();
+        var result = _lexer.ScanGrid(grid);
+        Assert.That(result, Is.Not.Empty);
+        
+    }
+    
+    [Test]
+    public void ScanGrid_EmptyCells_ShouldBeOK()
+    {
+        var grid = Helpers.TestDataBuilder.CreateSpread();
+        grid[0, 0] = null!;
+        var result = _lexer.ScanGrid(grid);
+        Assert.That(result, Is.Not.Empty);
+    }
 }
