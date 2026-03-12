@@ -12,6 +12,7 @@ internal static class Program
     private const char Vertical = '|';
 
     private const string ErrorMessage = "Invalid card, {0}, at row|col: {1}|{2}";
+    private const string InstructionMessage = "Q to quit\tEnter to edit, again to commit.\tEsc to cancel edit.";
 
     private const byte CellWidth = 7;
     private const byte CellHeight = 2;
@@ -63,7 +64,7 @@ internal static class Program
             // Print text at bottom
             var bottomPrintPos = _height * 2 + 1;
             Console.SetCursorPosition(0, bottomPrintPos);
-            Console.WriteLine("Q to quit\tEnter to edit, again to commit.\tEsc to cancel edit.");
+            Console.WriteLine(InstructionMessage);
     
             // Draw the cursor cell
             DrawCell(0,0, "", true);
@@ -122,7 +123,8 @@ internal static class Program
                         MoveCursor(ref cursorRow, _height, 1);
                         break;
                     case ConsoleKey.Enter:
-                        
+                        // if error message, remove, print instruction
+                        // Console.Write(InstructionMessage);
                         state ^= State.Edit;
                         
                         counter = 0;
@@ -141,6 +143,7 @@ internal static class Program
                                 int padLength = (_width * CellWidth) - msg.Length;
                                 Console.WriteLine(msg.PadRight(padLength));
                                 Console.SetCursorPosition(tempCursorLeftPos, tempCursorTopPos);
+                                await FlashErrorCellAwait(cursorRow, cursorCol, text);
                             }
                             if (!isEmptyCell && text.Length != CellPadding)
                             {
@@ -245,6 +248,34 @@ internal static class Program
         
         }
     }
+
+    // Could probably be improved...
+    private static async Task FlashErrorCellAwait(int gridRow, int gridCol, string content)
+    {
+        StringBuilder cellBuilder = new ();
+        Console.CursorVisible = false;
+        var cursorPosition = GridToTerminal(gridRow, gridCol);
+        var newCursLeft = _cursOrigCol + cursorPosition.termCol;
+        var newCursTop = _cursOrigRow + cursorPosition.termRow;
+        
+        Console.SetCursorPosition(newCursLeft + 1, newCursTop + 1);
+        Console.BackgroundColor = ConsoleColor.DarkRed;
+
+        if (string.IsNullOrWhiteSpace(content)) cellBuilder.Append(' ', CellPadding);
+        else cellBuilder.Append(content);
+        
+        Console.Write(cellBuilder.ToString().PadRight(CellPadding));
+        Console.ResetColor();
+        
+        await Task.Delay(300);
+        /*Console.SetCursorPosition(newCursLeft + 1, newCursTop + 1);
+        Console.BackgroundColor = ConsoleColor.DarkRed;
+        Console.Write(cellBuilder.ToString().PadRight(CellPadding));
+        Console.ResetColor();*/
+        
+        Console.SetCursorPosition(newCursLeft + 1, newCursTop + 1);
+    }
+    
     private static void DrawCell(int gridRow, int gridCol, string content, bool highlighted = false, bool edit = false)
     {
         StringBuilder cellBuilder = new ();

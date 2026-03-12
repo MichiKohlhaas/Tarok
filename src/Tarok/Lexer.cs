@@ -1,3 +1,4 @@
+using Tarok.Enums;
 namespace Tarok;
 
 /// <summary>
@@ -17,49 +18,39 @@ namespace Tarok;
 /// </summary>
 public class Lexer
 {
-    private static Dictionary<string, TokenEnum> keywords = new()
-        {
-            { "0", TokenEnum.MajorArcana},
-            { "I", TokenEnum.MajorArcana},
-            { "II", TokenEnum.MajorArcana},
-            { "III", TokenEnum.MajorArcana},
-            { "IV", TokenEnum.MajorArcana},
-            { "V", TokenEnum.MajorArcana},
-            { "VI", TokenEnum.MajorArcana},
-            { "VII", TokenEnum.MajorArcana},
-            { "VIII", TokenEnum.MajorArcana},
-            { "IX", TokenEnum.MajorArcana},
-            { "x", TokenEnum.MajorArcana},
-            { "XI", TokenEnum.MajorArcana},
-            { "XII", TokenEnum.MajorArcana},
-            { "XIII", TokenEnum.MajorArcana},
-            { "XIV", TokenEnum.MajorArcana},
-            { "XV", TokenEnum.MajorArcana},
-            { "XVI", TokenEnum.MajorArcana},
-            { "XVII", TokenEnum.MajorArcana},
-            { "XVIII", TokenEnum.MajorArcana},
-            { "XIX", TokenEnum.MajorArcana},
-            { "XX", TokenEnum.MajorArcana},
-            { "XXI", TokenEnum.MajorArcana},
-            
-            { "P", TokenEnum.CoinCard },
-            { "C", TokenEnum.CupCard },
-            { "S", TokenEnum.SwordCard },
-            { "W", TokenEnum.WandCard },
-            
-            { "@", TokenEnum.Reversed },
-            /*{ "spread", TokenEnum.Spread },
-            { "read",  TokenEnum.Read },*/
-            
-            { "PI", TokenEnum.Number },
-            { "PHI", TokenEnum.Number },
-            { "SIN", TokenEnum.Trig },
-            { "TAN", TokenEnum.Trig },
-            { "COS", TokenEnum.Trig },
-            { "ARCSIN", TokenEnum.Trig },
-            { "ARCCOS", TokenEnum.Trig },
-            { "ARCTAN", TokenEnum.Trig },
-        };
+    private static readonly Dictionary<string, Suit> SuitKeywords = new()
+    {
+        { "P", Suit.Pentacles },
+        { "C", Suit.Cups },
+        { "S", Suit.Swords },
+        { "W", Suit.Wands },
+    };
+
+    private static readonly Dictionary<string, Trump> RomanNumeralKeywords = new()
+    {
+        { "0", Trump.Fool },
+        { "I", Trump.Magician },
+        { "II", Trump.HighPriestess },
+        { "III", Trump.Empress },
+        { "IV", Trump.Emperor },
+        { "V", Trump.Hierophant },
+        { "VI", Trump.Lovers },
+        { "VII", Trump.Chariot },
+        { "VIII", Trump.Strength },
+        { "IX", Trump.Hermit },
+        { "x", Trump.WheelOfFortune },
+        { "XI", Trump.Justice },
+        { "XII", Trump.HangedMan },
+        { "XIII", Trump.Death },
+        { "XIV", Trump.Temperance },
+        { "XV", Trump.Devil },
+        { "XVI", Trump.Tower },
+        { "XVII", Trump.Star },
+        { "XVIII", Trump.Moon },
+        { "XIX", Trump.Sun },
+        { "XX", Trump.Judgement },
+        { "XXI", Trump.World },
+    };
     
     private int _start = 0; // first character being scanned
     private int _current = 0; // character currently considered
@@ -68,7 +59,7 @@ public class Lexer
     private readonly List<Token> _tokens = [];
 
     // Rank numeral buffer
-    private List<char> _rnBuffer = []; 
+    private readonly List<char> _rnBuffer = []; 
     
     public readonly List<TokenError> Errors = [];
     
@@ -76,6 +67,31 @@ public class Lexer
 
     private bool IsAtEnd => _current >= Source.Length;
 
+    /// <summary>
+    /// Cells[height, width] = row, columns
+    /// </summary>
+    /// <param name="cells"></param>
+    /// <returns></returns>
+    public List<Token> ScanGrid(string[,] cells)
+    {
+        _tokens.Clear();
+        for (var row = 0; row < cells.GetLength(0); row++)
+        {
+            for (var col = 0; col < cells.GetLength(1); col++)
+            {
+                _row = row; 
+                _column = col;
+                _start = _current;
+                
+                Source = cells[row, col];
+                ScanToken();
+                _current = 0;
+            }
+        }
+    
+        _tokens.Add(new Token(TokenEnum.EOF, null!, cells.GetLength(0), cells.GetLength(1)));
+        return _tokens;
+    }
 
     public List<Token> ScanTokens()
     {
@@ -84,22 +100,24 @@ public class Lexer
             _start = _current;
             ScanToken();
         }
-        _tokens.Add(new Token(TokenEnum.EOF, "", null, _row, _column));
+        _tokens.Add(new Token(TokenEnum.EOF, null!, _row, _column));
         return _tokens;
     }
-
+    
+    /// <summary>
+    /// Fix: should just validate, not call ScanToken(), which adds to _tokens.
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
     public bool IsValidToken(string token)
     {
-        var isReversed = false;
-        var startingErrorCount = Errors.Count;
-        token = token.TrimStart().TrimEnd();
-        
         if (string.IsNullOrEmpty(token)) return false;
         
-        if (token.Contains('@')) isReversed = true;
-
-        Source = isReversed ? token[1..] :  token;
+        var startingErrorCount = Errors.Count;
+        token = token.TrimStart().TrimEnd();
+        Source = token;
         _start = _current;
+        
         while (!IsAtEnd)
         {
             ScanToken();
@@ -113,26 +131,38 @@ public class Lexer
 
     private void ScanToken()
     {
+        if (string.IsNullOrEmpty(Source))
+        {
+            _tokens.Add(new Token(TokenEnum.Empty, null, _row, _column));
+            return;
+        }
         var c = Advance();
+        var isReversed = false;
+        if (c.Equals('@'))
+        {
+            isReversed = true;
+            c = Advance();
+        }
+        
         switch (c)
         {
             case 'I':
             case 'V':
             case 'X':
-                MajorArcana();
+                ScanMajorArcana(isReversed);
                 break;
             default:
                 if (IsDigit(c))
                 {
-                    if (c.Equals('0')) MajorArcana();
-                    else MinorArcana();
+                    if (c.Equals('0')) ScanMajorArcana(isReversed);
+                    else ScanMinorArcana(isReversed);
                 }
                 else Errors.Add(new TokenError("Unexpected character: " + c, _row, _column));
                 break;
         }
     }
 
-    private void MinorArcana()
+    private void ScanMinorArcana(bool isReversed)
     {
         _rnBuffer.Add(Source[_current - 1]);
         
@@ -168,23 +198,24 @@ public class Lexer
             Errors.Add(new TokenError($"Suit is longer than one character: {suitChar}", _row, _column));
             return;
         }
-        var containsKey = keywords.TryGetValue(suitChar.ToUpper(), out var type);
+        var containsKey = SuitKeywords.TryGetValue(suitChar.ToUpper(), out var type);
         if (!containsKey)
         {
             Errors.Add(new TokenError($"Unknown Suit: {suitChar}. Suits are 'W', 'S', 'P', 'C'", _row, _column));
             return;
         }
         
-        var minor = new MinorArcana(rankType, type);
+        var minor = new MinorArcana(rankType, type, isReversed);
+        
         AddToken(TokenEnum.MinorArcana, minor);
     }
 
-    private void MajorArcana()
+    private void ScanMajorArcana(bool isReversed)
     {
         while(IsAlpha(Peek()) && !IsAtEnd) Advance();
         
         var parsedString = Source[_start.._current];
-        var containsKey = keywords.ContainsKey(parsedString.ToUpper());
+        var containsKey = RomanNumeralKeywords.TryGetValue(parsedString.ToUpper(), out var type);
 
         if (!containsKey)
         {
@@ -192,7 +223,7 @@ public class Lexer
             return;
         }
         
-        var major = new MajorArcana(parsedString);
+        var major = new MajorArcana(type, isReversed);
         AddToken(TokenEnum.MajorArcana, major);
     }
 
@@ -212,12 +243,11 @@ public class Lexer
         return Source[_current++];
     }
 
-    private Token AddToken(TokenEnum token, object? literal = null)
+    private void AddToken(TokenEnum token, Arcana? arcana = null)
     {
-        var text = Source[_start.._current];
-        var validToken = new Token(token, text, literal, _row, _column);
+        //var text = Source[_start.._current];
+        var validToken = new Token(token, arcana!, _row, _column);
         _tokens.Add(validToken);
-        return validToken;
     }
 
     private char Peek()
