@@ -86,6 +86,7 @@ public class Lexer
                 Source = cells[row, col];
                 ScanToken();
                 _current = 0;
+                _rnBuffer.Clear();
             }
         }
     
