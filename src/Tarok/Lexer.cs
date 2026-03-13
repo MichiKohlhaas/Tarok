@@ -141,6 +141,7 @@ public class Lexer
         if (c.Equals('@'))
         {
             isReversed = true;
+            _start++;
             c = Advance();
         }
         
