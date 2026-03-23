@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Tarok.Enums;
 using Tarok.UnitTests.Helpers;
 
@@ -26,6 +27,13 @@ public class ParserValidation
     {
         var tokens1 = TestDataBuilder.CreateFoolBlock();
         var tokens2 = TestDataBuilder.CreateFoolBlock();
+        // in case the Ace cards are the same
+        if (tokens1[^1].Equals(tokens2[^1]))
+        {
+            tokens2 = TestDataBuilder.CreateFoolBlock();
+        }
+        Console.WriteLine(tokens1[^1].Arcana);
+        Console.WriteLine(tokens2[^1].Arcana);
         var tokens = tokens1.Concat(tokens2).ToList();
         var parsedProgram = _parser.Parse(tokens);
         Assert.That(parsedProgram.Slots, Has.Count.EqualTo(2));
