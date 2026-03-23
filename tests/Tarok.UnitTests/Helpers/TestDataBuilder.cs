@@ -1,8 +1,18 @@
+using Tarok.Enums;
+
 namespace Tarok.UnitTests.Helpers;
 
 public class TestDataBuilder
 {
     private static readonly Random Random = new();
+    
+    private static readonly Dictionary<char, Suit> SuitKeywords = new()
+    {
+        { 'P', Suit.Pentacles },
+        { 'C', Suit.Cups },
+        { 'S', Suit.Swords },
+        { 'W', Suit.Wands },
+    };
     
     public static string[,] CreateSpread()
     {
@@ -17,6 +27,56 @@ public class TestDataBuilder
             }
         }
         return spread;
+    }
+
+    public static List<Token> CreateFoolBlock()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenEnum.MajorArcana, 
+                new MajorArcana(Trump.Fool, false), 
+                1, 
+                1)
+        };
+
+        var number = Random.Next(3, 15);
+        for (var i = 0; i < number; i++)
+        {
+            tokens.Add(CreateRandomMinorArcanaToken());
+        }
+        
+        // close the marker
+        tokens.Add(new Token(
+            TokenEnum.MajorArcana, 
+            new MajorArcana(Trump.Fool, true), 
+            1, 
+            1)
+        );
+        
+        var suit = Random.Next(1, 4) switch
+        {
+            1 => Suit.Cups,
+            2 => Suit.Wands,
+            3 => Suit.Swords,
+            4 => Suit.Pentacles,
+        };
+        
+        // Ace card for memory slot
+        tokens.Add(new Token(
+            TokenEnum.MinorArcana,
+            new MinorArcana(1, suit, false),0,0));
+        
+        return tokens;
+    }
+
+    private static Token CreateRandomMinorArcanaToken()
+    {
+        var number = Random.Next(1, 15);
+        var suitNum = Random.Next(1, 5);
+        var randomSuit = ToSuit(suitNum);
+        var minor = new MinorArcana(number, SuitKeywords[randomSuit], false);
+        
+        return new Token(TokenEnum.MinorArcana, minor, 0, 0);
     }
 
     private static string CreateRandomMajorArcana()
@@ -34,24 +94,14 @@ public class TestDataBuilder
     
     private static char ToSuit(int number)
     {
-        var suits = new (int Value, char Suit)[]
+        return number switch
         {
-            (1, 'C'),
-            (2, 'P'),
-            (3, 'S'),
-            (4, 'W'),
+            1 => 'C',
+            2 => 'P',
+            3 => 'S',
+            4 => 'W',
+            _ => throw new ArgumentOutOfRangeException(nameof(number), number, null)
         };
-        
-        var result = '\0';
-        foreach (var (value, numeral) in suits)
-        {
-            while (number >= value)
-            {
-                result += numeral;
-                number -= value;
-            }
-        }
-        return result;
     }
 
     private static string ToRomanNumeral(int number)
