@@ -21,10 +21,9 @@ internal static class Program
     private static int _cursOrigCol;
     private static int _height;
     private static int _width;
-    
+
     public static async Task Main(string[] args)
     {
-
         if (args.Length > 2)
         {
             (_width, _height) = (int.Parse(args[0]), int.Parse(args[1]));
@@ -271,7 +270,7 @@ internal static class Program
         /*Console.SetCursorPosition(newCursLeft + 1, newCursTop + 1);
         Console.BackgroundColor = ConsoleColor.DarkRed;
         Console.Write(cellBuilder.ToString().PadRight(CellPadding));
-        Console.ResetColor();*/
+        Console.ResetColor();#1#*/
         
         Console.SetCursorPosition(newCursLeft + 1, newCursTop + 1);
     }
@@ -292,6 +291,8 @@ internal static class Program
         Console.Write(cellBuilder.ToString());
         cellBuilder.Clear();
 
+        // TODO: don't need to redraw the cell borders each time, just redraw the content within the bounds of the cell
+        // Move the drawing of the content to a separate method.
         // content row
         cellBuilder.Append(Vertical);
         Console.SetCursorPosition(newCursLeft, newCursTop + 1);
@@ -333,6 +334,7 @@ internal static class Program
         var termCol = Math.Clamp(gridCol * CellWidth, 0, int.MaxValue);
 
         return (termRow, termCol);
+    
     }
 }
 
