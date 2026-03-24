@@ -2,11 +2,11 @@ using Tarok.Errors;
 
 namespace Tarok;
 
-public class ParsedProgram(List<Token> executionTokens, Dictionary<Token, List<Token>> slots, List<TarokError> errors)
+internal sealed class ParsedProgram(List<Token> executionTokens, Dictionary<Token, List<Token>> slots, List<TarokError> errors)
 {
-    public List<Token> ExecutionTokens { get; init; } = executionTokens;
+    internal List<Token> ExecutionTokens { get; } = executionTokens;
     
-    public Dictionary<Token, List<Token>> Slots { get; init; } = slots;
+    internal Dictionary<Token, List<Token>> Slots { get; } = slots;
     
-    public List<TarokError> Errors { get; init; } =  errors;
+    internal List<TarokError> Errors { get; } =  errors;
 }

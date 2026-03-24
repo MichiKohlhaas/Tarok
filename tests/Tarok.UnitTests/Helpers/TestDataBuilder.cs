@@ -29,6 +29,27 @@ public class TestDataBuilder
         return spread;
     }
 
+    public static string[,] CreateFoolSpread()
+    {
+        var Fool = "0";
+        var FoolReversed = "@0";
+        var TwoOfPentacles = "2P";
+        var ThreeOfWands = "3W";
+        var FiveOfPentacles = "5P";
+        var AceOfPentacles = "1P";
+
+
+        var spread = new string[1, 6];
+        spread[0, 0] = Fool;
+        spread[0, 1] = TwoOfPentacles;
+        spread[0, 2] = ThreeOfWands;
+        spread[0, 3] = FiveOfPentacles;
+        spread[0, 4] = FoolReversed;
+        spread[0, 5] = AceOfPentacles;
+        
+        return spread;
+    }
+
     public static List<Token> CreateFoolBlock()
     {
         var tokens = new List<Token>

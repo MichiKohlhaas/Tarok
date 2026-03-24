@@ -1,4 +1,6 @@
 using Tarok.Enums;
+using Tarok.Errors;
+
 namespace Tarok;
 
 /// <summary>
@@ -16,7 +18,7 @@ namespace Tarok;
 /// suit       := 'S' | 'W' | 'P' | 'C'
 /// 
 /// </summary>
-public class Lexer
+internal class Lexer
 {
     private static readonly Dictionary<string, Suit> SuitKeywords = new()
     {
@@ -61,9 +63,9 @@ public class Lexer
     // Rank numeral buffer
     private readonly List<char> _rnBuffer = []; 
     
-    public readonly List<TokenError> Errors = [];
+    internal readonly List<TokenError> Errors = [];
     
-    public string Source { get; set; }
+    internal string Source { get; set; }
 
     private bool IsAtEnd => _current >= Source.Length;
 
@@ -72,7 +74,7 @@ public class Lexer
     /// </summary>
     /// <param name="cells"></param>
     /// <returns></returns>
-    public List<Token> ScanGrid(string[,] cells)
+    internal List<Token> ScanGrid(string[,] cells)
     {
         _tokens.Clear();
         for (var row = 0; row < cells.GetLength(0); row++)

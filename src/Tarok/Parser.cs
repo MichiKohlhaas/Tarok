@@ -3,12 +3,12 @@ using Tarok.Errors;
 
 namespace Tarok;
 
-public class Parser()
+internal class Parser()
 {
     private readonly Dictionary<Token, List<Token>> _slots = new();
     private readonly List<TarokError> _errors = [];
 
-    public ParsedProgram Parse(List<Token> tokens)
+    internal ParsedProgram Parse(List<Token> tokens)
     {
         _slots.Clear();
         _errors.Clear();

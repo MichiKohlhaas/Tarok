@@ -37,14 +37,22 @@ namespace Tarok;
 ///            | AND | NAND
 ///
 /// OR/NOR     := 2W/@2W, usw.
-public class Evaluator
+internal class Evaluator()
 {
-    public readonly Dictionary<Token, List<Token>> Slots = new();
+    internal Dictionary<Token, List<Token>>? Slots { get; set; }
+    private readonly HashSet<Token> _evaluatingToken = [];
+
+    internal object EvaluateSlots(Token aceToken)
+    {
+        if (Slots?.TryGetValue(aceToken, out var slot) != false)
+            throw new TarokRuntimeError($"Memory slot {aceToken} has not been defined");
+        return Evaluate(slot!);
+    }
+    
     
     private object Evaluate(List<Token> tokens)
     {
         Stack<object> stack = new();
-        var evaluatingToken = new HashSet<Token>();
         
         foreach (var token in tokens)
         {
@@ -60,10 +68,10 @@ public class Evaluator
                     ApplyOperator(token, stack);
                     break;
                 case Role.MemorySlot:
-                    if (!evaluatingToken.Add(token))
+                    if (!_evaluatingToken.Add(token))
                         throw new TarokRuntimeError("Circular reference detected");
                     stack.Push(Evaluate(Slots[token]));
-                    evaluatingToken.Remove(token);
+                    _evaluatingToken.Remove(token);
                     break;
                 case Role.ConditionalMarker:
                 case Role.Unknown:
@@ -71,20 +79,20 @@ public class Evaluator
                     break;
             }
         } 
-        return stack.Pop();
+        return Pop(stack);
     }
 
     private static void ApplyOperator(Token token, Stack<object> stack)
     {
         if (IsUnary(token))
         {
-            var operand = stack.Pop();
+            var operand = Pop(stack);
             stack.Push(ApplyUnary(token, operand));
         }
         else
         {
-            var right = stack.Pop();
-            var left = stack.Pop();
+            var right = Pop(stack);
+            var left = Pop(stack);
             stack.Push(ApplyBinary(token, left, right));
         }
     }
@@ -147,16 +155,18 @@ public class Evaluator
 
     private static int ApplyAddSub(bool isReversed, object left, object right)
     {
-        if (left is not int && right is not int) throw new TarokRuntimeError(
+        if (left is not int li || right is not int ri) throw new TarokRuntimeError(
             $"Malformed binary. Arithmetic cannot be performed on {left} and {right}");
-        return isReversed ? (int)left - (int)right : (int)left + (int)right;
+        return isReversed ? li - ri : li + ri;
     }
 
     private static int ApplyMultiplyDivide(bool isReversed, object left, object right)
     {
-        if (left is not int && right is not int) throw new TarokRuntimeError(
+        if (left is not int li || right is not int ri) throw new TarokRuntimeError(
             $"Malformed binary. Arithmetic cannot be performed on {left} and {right}");
-        return isReversed ? (int)left / (int)right : (int)left * (int)right;
+        if (isReversed && ri == 0)
+            throw new TarokRuntimeError("Division by zero");
+        return isReversed ? li / ri : li * ri;
     }
 
 
@@ -204,4 +214,11 @@ public class Evaluator
         MajorArcana(Trump.Justice, _) => Role.ConditionalMarker,
         _ => Role.Unknown
     };
+
+    private static object Pop(Stack<object> stack)
+    {
+        if (stack.Count == 0)
+            throw new TarokRuntimeError("Malformed expression: no operands");
+        return stack.Pop();
+    }
 }

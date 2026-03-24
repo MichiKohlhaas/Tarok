@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using Tarok;
 
 namespace TarotUI;
@@ -34,8 +33,8 @@ internal static class Program
             _width = 10;
         }
         _cellContents = new string[_height, _width];
-        
-        Lexer lexer = new Lexer();
+
+        var compiler = new TarokCompiler();
         
         
 
@@ -132,7 +131,7 @@ internal static class Program
                         {
                             Array.Clear(editBufferChars, 0, editBufferChars.Length);
                             var text = _cellContents[cursorRow, cursorCol];
-                            if (!isEmptyCell && !lexer.IsValidToken(text))
+                            if (!isEmptyCell && !compiler.IsValidToken(text))
                             {
                                 var tempCursorTopPos = Console.CursorTop;
                                 var tempCursorLeftPos = Console.CursorLeft;
