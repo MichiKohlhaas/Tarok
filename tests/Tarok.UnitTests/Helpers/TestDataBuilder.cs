@@ -38,16 +38,31 @@ public class TestDataBuilder
         var FiveOfPentacles = "5P";
         var AceOfPentacles = "1P";
 
+        var major = "VIII";
+        var minor = "12S";
 
-        var spread = new string[1, 6];
-        spread[0, 0] = Fool;
-        spread[0, 1] = TwoOfPentacles;
-        spread[0, 2] = ThreeOfWands;
-        spread[0, 3] = FiveOfPentacles;
-        spread[0, 4] = FoolReversed;
-        spread[0, 5] = AceOfPentacles;
+        var spread = new string[1, 8];
+        spread[0, 0] = major;
+        spread[0, 1] = Fool;
+        spread[0, 2] = TwoOfPentacles;
+        spread[0, 3] = ThreeOfWands;
+        spread[0, 4] = FiveOfPentacles;
+        spread[0, 5] = FoolReversed;
+        spread[0, 6] = AceOfPentacles;
+        spread[0, 7] = minor;
         
         return spread;
+    }
+
+    public static List<Token> ExpectedTokens()
+    {
+        return
+        [
+            new Token(TokenEnum.MajorArcana, new MajorArcana(Trump.Strength, false), 0, 0),
+            new Token(TokenEnum.MinorArcana, new MinorArcana(1, Suit.Pentacles, false), 0, 6),
+            new Token(TokenEnum.MinorArcana, new MinorArcana(12, Suit.Swords, false), 0, 7),
+            new Token(TokenEnum.EOF, null, 0, 8)
+        ];
     }
 
     public static List<Token> CreateFoolBlock()
@@ -102,8 +117,8 @@ public class TestDataBuilder
 
     private static string CreateRandomMajorArcana()
     {
-        var number = Random.Next(0, 22);
-        return number == 0 ? "0" : ToRomanNumeral(number);
+        var number = Random.Next(1, 22);
+        return ToRomanNumeral(number);
     }
 
     private static string CreateRandomMinorArcana()

@@ -1,3 +1,4 @@
+using Tarok.Enums;
 using Tarok.UnitTests.Helpers;
 
 namespace Tarok.UnitTests;
@@ -16,7 +17,7 @@ public class TarokCompilerTests
     public void Compiler_IntegrationTest_FoolGridParsed_ShouldReturnTrue()
     {
         var foolSpread = TestDataBuilder.CreateFoolSpread();
-        var result = _compiler.Compile(foolSpread);
-        Assert.That(result, Has.Count.EqualTo(0));
+        var errors = _compiler.Compile(foolSpread);
+        Assert.That(errors, Has.Count.EqualTo(0));
     }
 }

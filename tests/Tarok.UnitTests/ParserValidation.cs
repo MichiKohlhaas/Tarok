@@ -63,4 +63,16 @@ public class ParserValidation
         var parsedProgram = _parser.Parse(tokens);
         Assert.That(parsedProgram.Slots, Has.Count.EqualTo(1));
     }
+
+    [Test]
+    public void ParseFoolBlock_ExecutionTokensContainNoFool_ShouldReturnTrue()
+    {
+        var foolSpread = TestDataBuilder.CreateFoolSpread();
+        Lexer lexer = new Lexer();
+        var tokens = lexer.ScanGrid(foolSpread);
+        var parsedProgram = _parser.Parse(tokens);
+        
+        var expectedTokens = TestDataBuilder.ExpectedTokens();
+        Assert.That(parsedProgram.ExecutionTokens, Is.EqualTo(expectedTokens));
+    }
 }
