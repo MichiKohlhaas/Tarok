@@ -5,7 +5,7 @@ namespace Tarok;
 internal sealed class Executor(Evaluator evaluator)
 {
     private Dictionary<(int row, int col), Token> GridLookup { get; set; } = [];
-    public List<TarokError> Errors { get; set; }
+    public List<TarokError> Errors { get; set; } = [];
     
     
     internal IReadOnlyList<TarokError> Execute(ParsedProgram parsedProgram)
