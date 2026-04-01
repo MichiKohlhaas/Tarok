@@ -1,9 +1,9 @@
 namespace Tarok.Errors;
 
-public class TarokParseError(string message, Token token) : TarokError(message)
+public class TarokParseError(string message, Token? token) : TarokError(message)
 {
     public string PrintToken()
     {
-        return $"Token type: {token.Arcana}.\nArcana: {token.Arcana}";
+        return token is null ? "No token found" : $"Token type: {token.Arcana}.\nArcana: {token.Arcana}";
     } 
 }

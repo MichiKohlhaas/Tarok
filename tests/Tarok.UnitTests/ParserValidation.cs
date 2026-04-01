@@ -68,11 +68,21 @@ public class ParserValidation
     public void ParseFoolBlock_ExecutionTokensContainNoFool_ShouldReturnTrue()
     {
         var foolSpread = TestDataBuilder.CreateFoolSpread();
-        Lexer lexer = new Lexer();
+        var lexer = new Lexer();
         var tokens = lexer.ScanGrid(foolSpread);
         var parsedProgram = _parser.Parse(tokens);
         
         var expectedTokens = TestDataBuilder.ExpectedTokens();
         Assert.That(parsedProgram.ExecutionTokens, Is.EqualTo(expectedTokens));
+    }
+
+    [Test]
+    public void ParseMagicianBlock_TrueFalseBranch_ShouldReturnTrue()
+    {
+        var magicianSpread = TestDataBuilder.CreateMagicianBranchSpread();
+        var lexer = new Lexer();
+        var tokens = lexer.ScanGrid(magicianSpread);
+        var parsedProgram = _parser.Parse(tokens);
+        Assert.That(parsedProgram.Branches, Has.Count.EqualTo(1));
     }
 }

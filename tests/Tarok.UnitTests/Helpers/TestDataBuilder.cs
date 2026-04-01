@@ -29,6 +29,9 @@ public class TestDataBuilder
         return spread;
     }
 
+    /* 
+     * [VIII] [0] [2P] [3W] [5P] [@0] [1P] [12S]
+     */
     public static string[,] CreateFoolSpread()
     {
         var Fool = "0";
@@ -54,6 +57,33 @@ public class TestDataBuilder
         return spread;
     }
 
+    /*    0    1    2     3   4     5    6    7
+     * 0 [  ] [  ] [  ] [  ] [10W] [2C] [9S] [IV] 
+     * 1 [XI] [2P] [3W] [5P] [I  ] [  ] [  ] [  ] 
+     * 2 [  ] [  ] [  ] [  ] [13S] [4S] [8P] [XII]
+     * */
+    public static string[,] CreateMagicianBranchSpread()
+    {
+        var spread = new string[3, 8];
+        spread[0, 4] = "10W";
+        spread[0, 5] = "2C";
+        spread[0, 6] = "9S";
+        spread[0, 7] = "IV";
+        spread[1, 0] = "XI";
+        spread[1, 1] = "2P";
+        spread[1, 2] = "3W";
+        spread[1, 3] = "5P";
+        spread[1, 4] = "I";
+        spread[2, 4] = "13S";
+        spread[2, 5] = "4S";
+        spread[2, 6] = "8P";
+        spread[2, 7] = "XII";
+        return spread;
+    }
+
+    /*
+     * [VIII] [1P] [12S] [EOF]
+     */
     public static List<Token> ExpectedTokens()
     {
         return
