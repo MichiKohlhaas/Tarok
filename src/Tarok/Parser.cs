@@ -115,8 +115,9 @@ internal class Parser()
             .ToList();
         
         _branches[(magicianRow, magicianCol)] = new Branch(trueBranchTokens, falseBranchTokens);
-        _skipCoordinates.Add((trueBranchRow, magicianCol));
-        _skipCoordinates.Add((falseBranchRow, magicianCol));
+        
+        trueBranchTokens.ForEach(t => _skipCoordinates.Add((t.Row, t.Column)));
+        falseBranchTokens.ForEach(t => _skipCoordinates.Add((t.Row, t.Column)));
     }
 
     private static bool IsFoolUpright(Token token)

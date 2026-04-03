@@ -115,7 +115,7 @@ public class ParserValidation
         var parsedProgram = _parser.Parse(lexer.ScanGrid(magicianSpread));
 
         Assert.That(parsedProgram.ExecutionTokens, Has.None.Matches<Token>(t =>
-            t.Row is trueBranch or falseBranch && t.Column == magicianCol));
+            t.Row is trueBranch or falseBranch && t.Column >= magicianCol));
     }
 
     [Test]
@@ -133,7 +133,7 @@ public class ParserValidation
         using (Assert.EnterMultipleScope())
         {
             Assert.That(branch.TrueBranch, Has.All.Matches<Token>(t => t is { Row: trueBranch, Column: >= magicianCol }));
-            Assert.That(branch.FalseBranch, Has.All.Matches<Token>(t => t is { Row: trueBranch, Column: >= magicianCol }));
+            Assert.That(branch.FalseBranch, Has.All.Matches<Token>(t => t is { Row: falseBranch, Column: >= magicianCol }));
         }
     }
     
