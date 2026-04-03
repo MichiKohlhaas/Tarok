@@ -82,6 +82,59 @@ public class TestDataBuilder
     }
 
     /*
+     * 0 [XI] [2P] [3W] [5P] [I  ] [  ] [  ] [  ] 
+     * 1 [  ] [  ] [  ] [  ] [13S] [4S] [8P] [XII]
+     */
+    public static string[,] MagicianRow0Spread()
+    {
+        var spread = new string[2, 8];
+        spread[0, 0] = "XI";
+        spread[0, 1] = "2P";
+        spread[0, 2] = "3W";
+        spread[0, 3] = "5P";
+        spread[0, 4] = "I";
+        spread[1, 4] = "13S";
+        spread[1, 5] = "4S";
+        spread[1, 6] = "8P";
+        spread[1, 7] = "XII";
+        return spread;
+    }
+    
+    /*
+     * 0    1    2     3   4     5    6    7
+     * 0 [  ] [  ] [  ] [  ] [10W] [2C] [9S] [IV] 
+     * 1 [XI] [2P] [3W] [5P] [I  ] [  ] [  ] [  ] 
+     */
+    public static string[,] MagicianRowMaxSpread()
+    {
+        var spread = new string[2, 8];
+        spread[0, 4] = "13S";
+        spread[0, 5] = "4S";
+        spread[0, 6] = "8P";
+        spread[0, 7] = "XII";
+        spread[1, 0] = "XI";
+        spread[1, 1] = "2P";
+        spread[1, 2] = "3W";
+        spread[1, 3] = "5P";
+        spread[1, 4] = "I";
+        return spread;
+    }
+
+    public static string[,] JusticRowNoMagicianSpread()
+    {
+        var spread = new string[2, 8];
+        spread[0, 4] = "XI";
+        spread[0, 5] = "4S";
+        spread[0, 6] = "8P";
+        spread[0, 7] = "XII";
+        spread[1, 0] = "IX";
+        spread[1, 1] = "2P";
+        spread[1, 2] = "3W";
+        spread[1, 3] = "5P";
+        return spread;
+    }
+
+    /*
      * [VIII] [1P] [12S] [EOF]
      */
     public static List<Token> ExpectedTokens()

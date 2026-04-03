@@ -40,9 +40,11 @@ internal class Parser()
             }
             else if (IsMagician(token) && !_skipRows.Contains(token.Row))
             {
-                if (token.Row + 1 > tokens.Count || token.Row - 1 < 0)
+                if (tokensByRow[token.Row + 1].Find(x => x.Type == TokenEnum.EOF) is not null || token.Row - 1 < 0)
                 {
-                    throw new TarokParseError($"Parser encountered Card branching out of grid range at: {token.Row}-{token.Column}.", token);
+                    _errors.Add(new TarokParseError($"Parser encountered Card branching out of grid range at: {token.Row}-{token.Column}.", token));
+                    _counter++;
+                    continue;
                 }
                 var trueBranch = tokensByRow[token.Row - 1];
                 var falseBranch = tokensByRow[token.Row + 1];

@@ -83,6 +83,84 @@ public class ParserValidation
         var lexer = new Lexer();
         var tokens = lexer.ScanGrid(magicianSpread);
         var parsedProgram = _parser.Parse(tokens);
-        Assert.That(parsedProgram.Branches, Has.Count.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(parsedProgram.Branches, Has.Count.EqualTo(1));
+            Assert.That(parsedProgram.ExecutionTokens.Any(t =>
+                t.Arcana is MajorArcana { Card: Trump.Magician }), Is.True);
+        }
+    }
+    
+    [Test]
+    public void ParseMagicianBlock_BranchCoordinatesCorrect_ShouldReturnTrue()
+    {
+        var magicianSpread = TestDataBuilder.CreateMagicianBranchSpread();
+        const int magicianRow = 1;
+        const int magicianCol = 4;
+        var lexer = new Lexer();
+        var parsedProgram = _parser.Parse(lexer.ScanGrid(magicianSpread));
+
+        Assert.That(parsedProgram.Branches.ContainsKey((magicianRow,magicianCol)));
+    }
+
+    [Test]
+    public void ParseMagicianBlock_BranchNotInExecutionTokens_ShouldReturnTrue()
+    {
+        var magicianSpread = TestDataBuilder.CreateMagicianBranchSpread();
+        const int magicianRow = 1;
+        const int trueBranch = magicianRow - 1;
+        const int falseBranch = magicianRow + 1;
+        var lexer = new Lexer();
+        var parsedProgram = _parser.Parse(lexer.ScanGrid(magicianSpread));
+
+        Assert.That(parsedProgram.ExecutionTokens, Has.None.Matches<Token>(t =>
+            t.Row is trueBranch or falseBranch));
+    }
+
+    [Test]
+    public void ParseMagicianBlock_BranchContentCoordinates_ShouldReturnTrue()
+    {
+        var magicianSpread = TestDataBuilder.CreateMagicianBranchSpread();
+        const int magicianRow = 1;
+        const int magicianCol = 4;
+        const int trueBranch = magicianRow - 1;
+        const int falseBranch = magicianRow + 1;
+        var lexer = new Lexer();
+        var parsedProgram = _parser.Parse(lexer.ScanGrid(magicianSpread));
+
+        var branch = parsedProgram.Branches[(magicianRow, magicianCol)];
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(branch.TrueBranch, Has.All.Matches<Token>(t => t.Row == trueBranch));
+            Assert.That(branch.FalseBranch, Has.All.Matches<Token>(t => t.Row == falseBranch));
+        }
+    }
+    
+
+    [Test]
+    public void ParseMagicianBlock_Row0_ShouldReturnError()
+    {
+        var magicianSpread = TestDataBuilder.MagicianRow0Spread();
+        var lexer = new Lexer();
+        var parsedProgram = _parser.Parse(lexer.ScanGrid(magicianSpread));
+        Assert.That(parsedProgram.Errors, Has.Count.EqualTo(1));
+    }
+    
+    [Test]
+    public void ParseMagicianBlock_RowMax_ShouldReturnError()
+    {
+        var magicianSpread = TestDataBuilder.MagicianRowMaxSpread();
+        var lexer = new Lexer();
+        var parsedProgram = _parser.Parse(lexer.ScanGrid(magicianSpread));
+        Assert.That(parsedProgram.Errors, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void ParseJusticeBlock_JusticeWithNoMagician_ShouldReturnTrue()
+    {
+        var justiceSpread = TestDataBuilder.JusticRowNoMagicianSpread();
+        var lexer = new Lexer();
+        var parsedProgram = _parser.Parse(lexer.ScanGrid(justiceSpread));
+        Assert.That(parsedProgram.Errors, Has.Count.EqualTo(0));
     }
 }
