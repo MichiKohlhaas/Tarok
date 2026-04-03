@@ -108,13 +108,14 @@ public class ParserValidation
     {
         var magicianSpread = TestDataBuilder.CreateMagicianBranchSpread();
         const int magicianRow = 1;
+        const int magicianCol = 4;
         const int trueBranch = magicianRow - 1;
         const int falseBranch = magicianRow + 1;
         var lexer = new Lexer();
         var parsedProgram = _parser.Parse(lexer.ScanGrid(magicianSpread));
 
         Assert.That(parsedProgram.ExecutionTokens, Has.None.Matches<Token>(t =>
-            t.Row is trueBranch or falseBranch));
+            t.Row is trueBranch or falseBranch && t.Column == magicianCol));
     }
 
     [Test]
@@ -131,8 +132,8 @@ public class ParserValidation
         var branch = parsedProgram.Branches[(magicianRow, magicianCol)];
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(branch.TrueBranch, Has.All.Matches<Token>(t => t.Row == trueBranch));
-            Assert.That(branch.FalseBranch, Has.All.Matches<Token>(t => t.Row == falseBranch));
+            Assert.That(branch.TrueBranch, Has.All.Matches<Token>(t => t is { Row: trueBranch, Column: >= magicianCol }));
+            Assert.That(branch.FalseBranch, Has.All.Matches<Token>(t => t is { Row: trueBranch, Column: >= magicianCol }));
         }
     }
     

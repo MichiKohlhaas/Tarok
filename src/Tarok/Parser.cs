@@ -9,9 +9,7 @@ internal class Parser()
     private readonly Dictionary<Token, List<Token>> _slots = new();
     private readonly Dictionary<(int row, int col), Branch> _branches = new();
     private readonly List<TarokError> _errors = [];
-    private List<Token> _trueBranch = [];
-    private List<Token> _falseBranch = [];
-    private readonly HashSet<int> _skipRows = [];
+    private readonly HashSet<(int row, int col)> _skipCoordinates = [];
     private readonly List<Token> _executionTokens = [];
     private int _counter;
     
@@ -20,40 +18,24 @@ internal class Parser()
     {
         ClearDataStructures();
         var tokensByRow = tokens.GroupBy(t => t.Row)
-                                                     .ToDictionary(k => k.Key, k => k.OrderBy(x => x.Column).ToList());
-
+            .ToDictionary(k => k.Key, k => k.OrderBy(x => x.Column).ToList());
+        
+        var magicianTokens = tokens.Where(t => t.Arcana is MajorArcana { Card: Trump.Magician })
+            .ToList();
+        magicianTokens.ForEach(m => ParseBranch(m, tokensByRow));
+        
         while (_counter < tokens.Count)
         {
             var token = tokens[_counter];
 
-            if (_skipRows.Contains(token.Row))
+            if (_skipCoordinates.Contains((token.Row, token.Column)))
             {
-                // handle nested Magician cards, fool blocks, etc.
                 _counter++;
+                continue;
             }
-
-            // TODO: for future, in case where fool block ends but there are more tokens on the same row as part of branch, do something.
             if (IsFoolUpright(token))
             {
                 ParseFoolBlocks(tokens);    
-                //_skipRows.Add(token.Row);
-            }
-            else if (IsMagician(token) && !_skipRows.Contains(token.Row))
-            {
-                if (tokensByRow[token.Row + 1].Find(x => x.Type == TokenEnum.EOF) is not null || token.Row - 1 < 0)
-                {
-                    _errors.Add(new TarokParseError($"Parser encountered Card branching out of grid range at: {token.Row}-{token.Column}.", token));
-                    _counter++;
-                    continue;
-                }
-                var trueBranch = tokensByRow[token.Row - 1];
-                var falseBranch = tokensByRow[token.Row + 1];
-                
-                _branches[(token.Row, token.Column)] = new Branch(trueBranch, falseBranch);
-                _executionTokens.Add(token);
-                _skipRows.Add(token.Row - 1);
-                _skipRows.Add(token.Row + 1);
-                _counter++;
             }
             else
             {
@@ -70,9 +52,7 @@ internal class Parser()
         _counter = 0;
         _slots.Clear();
         _errors.Clear();
-        _skipRows.Clear();
-        _trueBranch.Clear();
-        _falseBranch.Clear();
+        _skipCoordinates.Clear();
         _executionTokens.Clear();
     }
 
@@ -111,6 +91,32 @@ internal class Parser()
         }
         // if the Ace slot is already occupied, overwrite it (intentional).
         _slots[tokens[++_counter]] = tempTokens;
+    }
+
+    private void ParseBranch(Token magician, Dictionary<int, List<Token>> tokensByRow)
+    {
+        var magicianRow = magician.Row;
+        var magicianCol = magician.Column;
+        
+        if (tokensByRow[magicianRow + 1].Find(x => x.Type == TokenEnum.EOF) is not null || magicianRow - 1 < 0)
+        {
+            _errors.Add(new TarokParseError($"Parser encountered Card branching out of grid range at: {magicianRow}-{magicianCol}.", magician));
+            return;
+        }
+
+        var trueBranchRow = magicianRow - 1;
+        var falseBranchRow = magicianRow + 1;
+
+        var trueBranchTokens = tokensByRow.GetValueOrDefault(trueBranchRow, [])
+            .Where(t => t.Column >= magicianCol)
+            .ToList();
+        var falseBranchTokens = tokensByRow.GetValueOrDefault(falseBranchRow, [])
+            .Where(t => t.Column >= magicianCol)
+            .ToList();
+        
+        _branches[(magicianRow, magicianCol)] = new Branch(trueBranchTokens, falseBranchTokens);
+        _skipCoordinates.Add((trueBranchRow, magicianCol));
+        _skipCoordinates.Add((falseBranchRow, magicianCol));
     }
 
     private static bool IsFoolUpright(Token token)

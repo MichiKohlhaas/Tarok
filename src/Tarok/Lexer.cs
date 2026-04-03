@@ -136,7 +136,7 @@ internal class Lexer
     {
         if (string.IsNullOrEmpty(Source))
         {
-            _tokens.Add(new Token(TokenEnum.Empty, null, _row, _column));
+            //_tokens.Add(new Token(TokenEnum.Empty, null, _row, _column));
             return;
         }
         var c = Advance();
